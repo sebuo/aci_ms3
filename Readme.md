@@ -1,5 +1,5 @@
 # ACI MS3
-Gene Regulatory network
+Gene regulatory network
 
 ## optimization model in R
 

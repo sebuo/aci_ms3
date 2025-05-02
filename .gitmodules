@@ -1,0 +1,6 @@
+[submodule "external/DeepRIG"]
+	path = external/DeepRIG
+	url = https://github.com/JChander/DeepRIG.git
+[submodule "external/STGRNS"]
+	path = external/STGRNS
+	url = https://github.com/zhanglab-wbgcas/STGRNS.git
