@@ -4,3 +4,6 @@
 [submodule "external/STGRNS"]
 	path = external/STGRNS
 	url = https://github.com/zhanglab-wbgcas/STGRNS.git
+[submodule "external/scenicplus"]
+	path = external/scenicplus
+	url = https://github.com/aertslab/scenicplus
