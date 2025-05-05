@@ -1,29 +1,68 @@
 library(shiny)
+library(RcppCNPy)
+library(ggplot2)
 
-# Define UI for the application
+# UI ----
 ui <- fluidPage(
-    titlePanel("Shiny App Template"),
-    
-    sidebarLayout(
-        sidebarPanel(
-            # Add input elements here
-            textInput("text", "Enter text:", ""),
-            actionButton("action", "Submit")
-        ),
-        
-        mainPanel(
-            # Add output elements here
-            textOutput("outputText")
-        )
+  titlePanel("Accuracy Comparison: DeepRIG vs STGRNS"),
+  sidebarLayout(
+    sidebarPanel(
+      fileInput("yTrue", "Upload True Labels (y_test .npy)", accept = ".npy"),
+      fileInput("deepPred", "Upload DeepRIG Predictions (.npy)", accept = ".npy"),
+      fileInput("stgrnsPred", "Upload STGRNS Predictions (.npy)", accept = ".npy"),
+      width = 3
+    ),
+    mainPanel(
+      verbatimTextOutput("accText"),
+      plotOutput("accPlot"),
+      width = 9
     )
+  )
 )
 
-# Define server logic
-server <- function(input, output, session) {
-    output$outputText <- renderText({
-        paste("You entered:", input$text)
-    })
+# Server ----
+server <- function(input, output) {
+  # Reactive loaders
+  yTrue <- reactive({
+    req(input$yTrue)
+    as.numeric(RcppCNPy::npyLoad(input$yTrue$datapath))
+  })
+  deepPred <- reactive({
+    req(input$deepPred)
+    as.numeric(RcppCNPy::npyLoad(input$deepPred$datapath))
+  })
+  stgrnsPred <- reactive({
+    req(input$stgrnsPred)
+    as.numeric(RcppCNPy::npyLoad(input$stgrnsPred$datapath))
+  })
+
+  # Simple accuracy function
+  accuracy <- function(true, pred) {
+    mean((pred >= 0.5) == (true == 1))
+  }
+
+  # Display accuracies
+  output$accText <- renderPrint({
+    y <- yTrue(); d <- deepPred(); s <- stgrnsPred()
+    accDeep <- accuracy(y, d)
+    accSTGRNS <- accuracy(y, s)
+    cat(sprintf("DeepRIG accuracy: %.3f\nSTGRNS accuracy: %.3f", accDeep, accSTGRNS))
+  })
+
+  # Barplot of accuracies
+  output$accPlot <- renderPlot({
+    y <- yTrue(); d <- deepPred(); s <- stgrnsPred()
+    df <- data.frame(
+      Method = c("DeepRIG", "STGRNS"),
+      Accuracy = c(accuracy(y, d), accuracy(y, s))
+    )
+    ggplot(df, aes(x = Method, y = Accuracy)) +
+      geom_col() +
+      ylim(0, 1) +
+      labs(title = "Accuracy Comparison", x = NULL, y = "Accuracy") +
+      theme_minimal()
+  })
 }
 
-# Run the application
+# Run App ----
 shinyApp(ui = ui, server = server)
